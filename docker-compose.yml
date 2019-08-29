@@ -2,7 +2,7 @@ version: "3.7"
   
 services:
   countries:
-      image: countries/java:1.0
+      image: countires/java:1.0
       ports:
         - 8080:8080
       deploy:
@@ -11,45 +11,44 @@ services:
           condition: on-failure
           max_attempts: 5
       environment:
-        - SERVICE_PORTS=8080
+        - VIRTUAL_HOST=japp:8080
       networks:
         - jApp
   airport:
-      image: airport:1.1
+      image: airports:1.0.1
       ports:
-        - 8080
+        - 8070:8080
       deploy:
         replicas: 3
         restart_policy:
           condition: on-failure
           max_attempts: 5
       environment:
-        - SERVICE_PORTS=8080
+        - VIRTUAL_HOST=japp:8070
       networks:
         - jApp
   new_airport:
-    image: airport:1.0.1
+    image: airports:1.1
     ports:
-      - 8080
+      - 8090:8080
     deploy:
       replicas: 3
       restart_policy:
         condition: on-failure
         max_attempts: 5
     environment:
-      - SERVICE_PORTS=8080
+      - VIRTUAL_HOST=japp:8090
     networks:
       - jApp
   proxy:
-      image: dockercloud/haproxy
-      depends_on:
+      image: jwilder/nginx-proxy:alpine
+      links:
           - countries
           - airport
           - new_airport
-      environment:
-          - BALANCE=leastconn
       volumes:
-          - /var/run/docker.sock:/var/run/docker.sock
+          - ./default.conf:/etc/nginx/conf.d/myconf.conf
+          - /var/run/docker.sock:/tmp/docker.sock:ro
       networks:
           - jApp
       ports:
